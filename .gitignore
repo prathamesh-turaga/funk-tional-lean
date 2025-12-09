@@ -1,0 +1,10 @@
+# Ignore build artifacts (the heavy furniture)
+.lake/
+lake-packages/
+build/
+dist/
+out/
+
+# Ignore system files
+.DS_Store
+Thumbs.db

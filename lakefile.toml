@@ -1,0 +1,14 @@
+name = "functional_programming_in_lean"
+version = "0.1.0"
+defaultTargets = ["functional_programming_in_lean"]
+
+[[lean_lib]]
+name = "FunctionalProgrammingInLean"
+
+[[lean_exe]]
+name = "functional_programming_in_lean"
+root = "Main"
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
