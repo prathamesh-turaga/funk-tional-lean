@@ -209,8 +209,8 @@ def next (t : TrafficLight) : TrafficLight :=
 -- Hint: We need `intro` to bring `t` into the context,
 -- then `cases t` to check every color.
 example : ∀ t, next t ≠ t := by
-  intro t
-  cases t <;> simp [next]
+  sorry
+
 
 end TrafficLight
 

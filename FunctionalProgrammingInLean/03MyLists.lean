@@ -35,6 +35,7 @@ match l with
 | link _ l' => 1 + (length l')
 -- Note that the _ was wildcard defined earlier, since the length does not depend on the first element.
 
+#check length
 /-
 To join two lists, we keep the first list's structure and replace its `empty` end
 with the second list.
@@ -343,4 +344,143 @@ lemma rev_fastrev_eq : ∀(l : MyList α), rev l = fastrev l := by
   sorry
 
 
-end MyList
+
+/-
+## 4. Two Ways to Define Sortedness
+
+
+## How do we check if a list is sorted?
+We give two approaches.
+
+
+### ### Approach A: Boolean Check
+A function that traverses a list and returns `true` if it is sorted
+and `false` otherwise.
+-/
+
+
+def isSortedBool (l : MyList Nat) : Bool :=
+match l with
+| empty => true
+| link _ empty => true
+| link x (link y l') => x ≤ y ∧ isSortedBool (link y l')
+
+
+/-!
+### Approach B: Inductive Predicate
+A logical definition describing *why* a list is sorted.
+1. Empty list is sorted.
+2. Singleton list is sorted.
+3. If `x ≤ y` and `(y :: xs)` is sorted, then `x :: y :: xs` is sorted.
+-/
+
+
+inductive Sorted : MyList Nat → Prop where
+| nil : Sorted MyList.empty
+| singleton : ∀ x, Sorted (MyList.link x MyList.empty)
+| cons : ∀ {x y xs}, x ≤ y → Sorted (link y xs) → Sorted (link x (link y xs))
+
+
+
+
+
+-- # Insertion Sort Definitions
+
+/-!
+## Insertion Sort
+We define the classic insertion sort algorithm:
+1. `insertSorted`: Insert a new element into a sorted list.
+2. `insertionSort`: Recursively sort the tail and insert the head.
+-/
+
+/-!
+## Insertion Sort
+We define the classic insertion sort algorithm:
+1. `insertSorted`: Insert a new element into a sorted list.
+2. `insertionSort`: Recursively sort the tail and insert the head.
+-/
+
+
+def insertSorted (x : Nat) (l : MyList Nat) : MyList Nat :=
+match l with
+| empty => link x empty
+| link y l' =>
+if x ≤ y then link x (link y l')
+else link y (insertSorted x l')
+
+
+def insertionSort (l : MyList Nat) : MyList Nat :=
+match l with
+| empty => empty
+| link x l' => insertSorted x (insertionSort l')
+
+
+-- VISUALIZATION EXPLANATION:
+-- The element `x` recursively "bubbles down" until it finds
+-- its correct position inside the partially sorted list.
+
+
+
+
+-- ############################################################
+-- # Lemmas
+-- ############################################################
+
+
+/-!
+A short lemma: If `(x :: xs)` is sorted, then `xs` is sorted.
+-/
+
+lemma sorted_of_cons (x : Nat) (xs : MyList Nat)
+(h : Sorted (link x xs)) : Sorted xs := by
+cases h with
+| singleton => apply Sorted.nil
+| cons _ htail => exact htail
+
+
+/-!
+Insertion sort preserves length.
+(This is needed for future correctness proofs.)
+-/
+
+
+/-!
+Inserting an element into a sorted list keeps it sorted. `Fill in the sorry here`. Carefully observe what each step is doing.
+-/
+
+lemma insert_preserves_sorted (l : MyList Nat) (x : Nat)
+(h : Sorted l) : Sorted (insertSorted x l) := by
+induction l generalizing x with
+| empty => simp [insertSorted, Sorted.singleton]
+| link y ys ih =>
+  cases h with
+  | singleton =>
+    by_cases hx : x ≤ y
+    simp [insertSorted, hx]
+    apply Sorted.cons hx (Sorted.singleton y)
+    simp [insertSorted, hx]
+    --linarith uses the inbuilt linear arithmetic solver
+    apply Sorted.cons (by linarith [hx]) (Sorted.singleton x)
+  | cons hy1 hy2 =>
+    rename_i y' ys'
+    --rename_i gives provides to variables, go above and see what it is doing.
+    by_cases hx : x ≤ y
+    simp [insertSorted, hx]
+    have h_sorted_rest : Sorted (link y (link y' ys')) := by
+      have h_insert_y : Sorted (insertSorted y (link y' ys')) := ih y hy2
+      simp [insertSorted, hy1] at h_insert_y
+      exact h_insert_y
+    apply (Sorted.cons hx h_sorted_rest)
+    have hy_lt_x : y < x := by linarith[hx]
+    have h_eq : insertSorted x (link y (link y' ys')) = link y (insertSorted x (link y' ys')) := by
+      simp [insertSorted]
+      exact fun w => False.elim (hx w)
+    have hy_le_x : y ≤ x := Nat.le_of_not_ge hx
+    have sorted_tail : Sorted (insertSorted x (link y' ys')) := ih x hy2
+    sorry -- Finish the proof.
+
+lemma insertS_is_sorted (l: MyList Nat) : Sorted (insertionSort l) := by sorry
+
+/-!
+Main theorem: insertion sort produces a sorted list. Can you speculate, what are the other properties to prove its correctness?
+-/
